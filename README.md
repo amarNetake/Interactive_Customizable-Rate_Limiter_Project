@@ -110,7 +110,7 @@ GET `/rate-limit/stats/{userId}`
 ![Access Allowed](docs/simulate_request.png)
 
 #### Fetch top 50 request stats:
-![Access Allowed](docs/request_log.png)
+![Access Allowed](docs/request_logs.png)
 
 ---
 ## Database Schema
