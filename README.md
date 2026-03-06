@@ -1,4 +1,5 @@
-# 🚀 Smart Rate Limiter Service
+# Smart Rate Limiter Service
+---
 
 A configurable backend rate limiting service built using **Spring Boot**, **PostgreSQL**, and **React**.
 
