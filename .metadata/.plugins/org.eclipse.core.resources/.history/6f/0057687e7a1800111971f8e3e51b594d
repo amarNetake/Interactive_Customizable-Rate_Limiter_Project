@@ -1,0 +1,17 @@
+package com.amarnetake.RateLimiter.model;
+@Entity
+public class RequestLog {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String userId;
+
+    private boolean allowed;
+
+    private String algorithm;
+
+    private long timestamp;
+
+}

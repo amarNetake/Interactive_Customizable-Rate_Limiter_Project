@@ -1,0 +1,7 @@
+public interface RequestLogRepository extends JpaRepository<RequestLog, Long> {
+
+    List<RequestLog> findTop50ByOrderByTimestampDesc();
+
+    long countBy();
+
+}

@@ -1,0 +1,9 @@
+public class CreateRateLimitRequest {
+
+    private String userId;
+    private AlgorithmType algorithmType;
+    private int limitValue;
+    private long windowSizeInMillis;
+
+    // getters & setters
+}

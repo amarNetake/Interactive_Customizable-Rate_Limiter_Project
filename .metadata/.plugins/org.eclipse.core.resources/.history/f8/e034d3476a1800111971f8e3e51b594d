@@ -1,0 +1,38 @@
+@RestController
+@RequestMapping("/rate-limit")
+public class RateLimiterController {
+
+    private final RateLimiterService service;
+
+    public RateLimiterController(RateLimiterService service) {
+        this.service = service;
+    }
+
+    @PostMapping
+    public String createRateLimit(
+            @RequestBody CreateRateLimitRequest request) {
+
+        RateLimitConfig config = new RateLimitConfig();
+        config.setUserId(request.getUserId());
+        config.setAlgorithmType(request.getAlgorithmType());
+        config.setLimitValue(request.getLimitValue());
+        config.setWindowSizeInMillis(
+                request.getWindowSizeInMillis());
+
+        service.createRateLimit(config);
+
+        return "Rate limit created";
+    }
+
+    @PostMapping("/access/{userId}")
+    public AccessResponse access(@PathVariable String userId) {
+
+        boolean allowed = service.checkAccess(userId);
+
+        if (allowed) {
+            return new AccessResponse(true, "Allowed");
+        } else {
+            return new AccessResponse(false, "Blocked");
+        }
+    }
+}

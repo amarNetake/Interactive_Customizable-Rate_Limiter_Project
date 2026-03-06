@@ -1,0 +1,79 @@
+package com.amarnetake.RateLimiter.service.impl;
+
+import java.time.LocalDateTime;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Service;
+
+import com.amarnetake.RateLimiter.model.RateLimitConfig;
+import com.amarnetake.RateLimiter.model.ViolationLog;
+import com.amarnetake.RateLimiter.repository.RateLimitConfigRepository;
+import com.amarnetake.RateLimiter.repository.ViolationLogRepository;
+import com.amarnetake.RateLimiter.service.RateLimiterFactory;
+import com.amarnetake.RateLimiter.service.RateLimiterService;
+import com.amarnetake.RateLimiter.service.RateLimiterStrategy;
+
+@Service
+public class RateLimiterServiceImpl implements RateLimiterService {
+
+    private final RateLimitConfigRepository configRepo;
+    private final ViolationLogRepository violationRepo;
+
+    private final ConcurrentHashMap<String, RateLimiterStrategy> userLimiters;
+
+    public RateLimiterServiceImpl(RateLimitConfigRepository configRepo,
+                                   ViolationLogRepository violationRepo) {
+        this.configRepo = configRepo;
+        this.violationRepo = violationRepo;
+        this.userLimiters = new ConcurrentHashMap<>();
+    }
+
+    @Override
+    public void createRateLimit(RateLimitConfig config) {
+
+        configRepo.save(config);
+
+        RateLimiterStrategy strategy =
+                RateLimiterFactory.createStrategy(
+                        config.getAlgorithmType(),
+                        config.getLimitValue(),
+                        config.getWindowSizeInMillis()
+                );
+
+        userLimiters.put(config.getUserId(), strategy);
+    }
+
+    @Override
+    public boolean checkAccess(String userId) {
+
+        RateLimiterStrategy strategy = userLimiters.get(userId);
+
+        if (strategy == null) {
+            RateLimitConfig config =
+                    configRepo.findByUserId(userId)
+                            .orElseThrow(() ->
+                                    new RuntimeException("No config found"));
+
+            strategy = RateLimiterFactory.createStrategy(
+                    config.getAlgorithmType(),
+                    config.getLimitValue(),
+                    config.getWindowSizeInMillis()
+            );
+
+            userLimiters.put(userId, strategy);
+        }
+
+        boolean allowed = strategy.allowRequest(userId);
+
+        if (!allowed) {
+            ViolationLog log = new ViolationLog();
+            log.setUserId(userId);
+            log.setTimestamp(LocalDateTime.now());
+            log.setReason("Rate limit exceeded");
+            violationRepo.save(log);
+        }
+
+        return allowed;
+    }
+
+}

@@ -1,0 +1,5 @@
+package com.amarnetake.RateLimiter.config;
+
+public class RateLimitConfig {
+
+}

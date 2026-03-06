@@ -1,0 +1,7 @@
+package com.amarnetake.RateLimiter.repository;
+public interface RateLimitConfigRepository 
+    extends JpaRepository<RateLimitConfig, Long> {
+
+    Optional<RateLimitConfig> findByUserId(String userId);
+
+}

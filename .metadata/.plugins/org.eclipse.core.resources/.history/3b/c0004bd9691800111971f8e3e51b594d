@@ -1,0 +1,14 @@
+package com.amarnetake.RateLimiter.service;
+
+import com.amarnetake.RateLimiter.model.AlgorithmType;
+
+public interface RateLimiterService {
+
+    void createRateLimit(String userId,
+                         AlgorithmType type,
+                         int limit,
+                         long windowSizeInMillis);
+
+    boolean checkAccess(String userId);
+
+}

@@ -1,0 +1,32 @@
+package com.amarnetake.RateLimiter.service.impl;
+
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.amarnetake.RateLimiter.service.RateLimiterStrategy;
+
+public class FixedWindowRateLimiter implements RateLimiterStrategy{
+	
+	private final int requestLimit; // This is my core attribute of this class
+	
+	private final long windowSizeInMilli; //Another core attribute required for Fixed Window algo
+	
+	private final ConcurrentHashMap<String, Window> userWindows; //UserId -> Window details of that user
+	
+	class Window{
+		int count;  //His requests served thus far in current window
+		long windowStart; //His window start time in milliseconds
+	}
+
+	public FixedWindowRateLimiter(int requestLimit, long windowSizeInMilli) {
+		super();
+		this.requestLimit = requestLimit;
+		this.windowSizeInMilli = windowSizeInMilli;
+		this.userWindows = new ConcurrentHashMap<>();
+	}
+	
+	@Override
+	public boolean allowRequest(String userId) {
+		return false;
+	}
+	
+}

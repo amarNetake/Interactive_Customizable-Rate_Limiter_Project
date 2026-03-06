@@ -1,0 +1,6 @@
+package com.amarnetake.RateLimiter.repository;
+public interface ViolationLogRepository
+        extends JpaRepository<ViolationLog, Long> {
+
+    List<ViolationLog> findByUserId(String userId);
+}

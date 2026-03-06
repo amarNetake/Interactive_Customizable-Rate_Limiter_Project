@@ -1,0 +1,13 @@
+package com.amarnetake.RateLimiter.dto;
+public class AccessResponse {
+
+    private boolean allowed;
+    private String message;
+
+    public AccessResponse(boolean allowed, String message) {
+        this.allowed = allowed;
+        this.message = message;
+    }
+
+    // getters
+}

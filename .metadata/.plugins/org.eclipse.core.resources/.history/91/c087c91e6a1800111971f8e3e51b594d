@@ -1,0 +1,10 @@
+package com.amarnetake.RateLimiter.service;
+
+import com.amarnetake.RateLimiter.model.RateLimitConfig;
+
+public interface RateLimiterService {
+
+    void createRateLimit(RateLimitConfig config);
+
+    boolean checkAccess(String userId);
+}

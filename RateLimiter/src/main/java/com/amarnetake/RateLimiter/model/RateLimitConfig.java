@@ -1,0 +1,27 @@
+package com.amarnetake.RateLimiter.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.Data;
+
+@Entity
+@Data
+public class RateLimitConfig {
+	
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Long id;
+	
+	private String userId;
+	
+	@Enumerated(EnumType.STRING)
+	private AlgorithmType algorithmType;
+	
+	private int limitValue;
+	
+	private long windowSizeInMillis;
+}

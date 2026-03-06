@@ -1,0 +1,32 @@
+package com.amarnetake.RateLimiter.service.impl;
+
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.amarnetake.RateLimiter.service.RateLimiterStrategy;
+
+public class TokenBucketRateLimiter implements RateLimiterStrategy{
+
+	private final int bucketCapacity;
+	
+	private final double refillRatePerSecond;
+	
+	private final ConcurrentHashMap<String, Bucket> userBuckets;
+	
+	class Bucket{
+		double tokens;
+		long lastRefillTime;
+	}
+
+	public TokenBucketRateLimiter(int bucketCapacity, double refillRatePerSecond) {
+		super();
+		this.bucketCapacity = bucketCapacity;
+		this.refillRatePerSecond = refillRatePerSecond;
+		this.userBuckets = new ConcurrentHashMap<>();
+	}
+	
+	@Override
+	public boolean allowRequest(String userId) {
+		return false;
+	}
+	
+}

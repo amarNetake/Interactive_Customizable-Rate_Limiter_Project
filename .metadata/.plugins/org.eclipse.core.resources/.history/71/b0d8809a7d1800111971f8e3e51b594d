@@ -1,0 +1,127 @@
+package com.amarnetake.RateLimiter.service.impl;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import com.amarnetake.RateLimiter.model.RateLimitConfig;
+import com.amarnetake.RateLimiter.model.RequestLog;
+import com.amarnetake.RateLimiter.model.ViolationLog;
+import com.amarnetake.RateLimiter.repository.RateLimitConfigRepository;
+import com.amarnetake.RateLimiter.repository.RequestLogRepository;
+import com.amarnetake.RateLimiter.repository.ViolationLogRepository;
+import com.amarnetake.RateLimiter.service.RateLimiterFactory;
+import com.amarnetake.RateLimiter.service.RateLimiterService;
+import com.amarnetake.RateLimiter.service.RateLimiterStrategy;
+
+@Service
+public class RateLimiterServiceImpl implements RateLimiterService {
+
+    private final RateLimitConfigRepository configRepo;
+    private final ViolationLogRepository violationRepo;
+    private final RequestLogRepository requestLogRepo;
+
+    private final ConcurrentHashMap<String, RateLimiterStrategy> userLimiters;
+
+    public RateLimiterServiceImpl(
+            RateLimitConfigRepository configRepo,
+            ViolationLogRepository violationRepo,
+            RequestLogRepository requestLogRepo) {
+
+        this.configRepo = configRepo;
+        this.violationRepo = violationRepo;
+        this.requestLogRepo = requestLogRepo;
+        this.userLimiters = new ConcurrentHashMap<>();
+    }
+
+    @Override
+    public void createRateLimit(RateLimitConfig config) {
+
+        configRepo.save(config);
+
+        RateLimiterStrategy strategy =
+                RateLimiterFactory.createStrategy(
+                        config.getAlgorithmType(),
+                        config.getLimitValue(),
+                        config.getWindowSizeInMillis()
+                );
+
+        userLimiters.put(config.getUserId(), strategy);
+    }
+
+    @Override
+    public boolean checkAccess(String userId) {
+
+        RateLimiterStrategy strategy = userLimiters.get(userId);
+
+        RateLimitConfig config;
+
+        if (strategy == null) {
+
+            config = configRepo.findByUserId(userId)
+                    .orElseThrow(() ->
+                            new RuntimeException("No config found"));
+
+            strategy = RateLimiterFactory.createStrategy(
+                    config.getAlgorithmType(),
+                    config.getLimitValue(),
+                    config.getWindowSizeInMillis()
+            );
+
+            userLimiters.put(userId, strategy);
+
+        } else {
+
+            config = configRepo.findByUserId(userId)
+                    .orElseThrow(() ->
+                            new RuntimeException("No config found"));
+        }
+
+        boolean allowed = strategy.allowRequest(userId);
+
+        // -------- Request Log --------
+
+        RequestLog log = new RequestLog();
+        log.setUserId(userId);
+        log.setAllowed(allowed);
+        log.setAlgorithm(config.getAlgorithmType());
+        log.setTimestamp(System.currentTimeMillis());
+
+        requestLogRepo.save(log);
+        
+        long total = requestLogRepo.countBy();
+
+        if (total > 1000) {
+            long deleteCount = total - 1000;
+
+            Pageable pageable = PageRequest.of(0, (int) deleteCount);
+            List<RequestLog> oldLogs =
+                    requestLogRepo.findAll(pageable).getContent();
+
+            requestLogRepo.deleteAll(oldLogs);
+        }
+
+        // -------- Violation Log --------
+
+        if (!allowed) {
+
+            ViolationLog vLog = new ViolationLog();
+            vLog.setUserId(userId);
+            vLog.setTimestamp(LocalDateTime.now());
+            vLog.setReason("Rate limit exceeded");
+
+            violationRepo.save(vLog);
+        }
+
+        return allowed;
+    }
+
+    @Override
+    public List<ViolationLog> getViolations(String userId) {
+        return violationRepo.findByUserId(userId);
+    }
+}

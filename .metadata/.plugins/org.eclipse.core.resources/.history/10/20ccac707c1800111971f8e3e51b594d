@@ -1,0 +1,21 @@
+package com.amarnetake.RateLimiter.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+
+import com.amarnetake.RateLimiter.model.RequestLog;
+
+public interface RequestLogRepository extends JpaRepository<RequestLog, Long> {
+
+	List<RequestLog> findTop50ByUserIdOrderByTimestampDesc(String userId);
+
+    long countBy();
+    
+    @Modifying
+    @Query(value = "DELETE FROM request_log ORDER BY timestamp ASC LIMIT 1", nativeQuery = true)
+    void deleteOldest();
+
+}

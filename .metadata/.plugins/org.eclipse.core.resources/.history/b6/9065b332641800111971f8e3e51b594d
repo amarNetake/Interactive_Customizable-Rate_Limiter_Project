@@ -1,0 +1,27 @@
+package com.amarnetake.RateLimiter.service.impl;
+
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.amarnetake.RateLimiter.service.RateLimiterStrategy;
+
+public class SlidingWindowRateLimiter implements RateLimiterStrategy{
+
+	private final int requestLimit;
+	private final long windowSizeInMillis;
+	
+	private final ConcurrentHashMap<String, Queue<Long>> userRequests;  //Dynamic window, which shifts to the right with time
+
+	public SlidingWindowRateLimiter(int requestLimit, long windowSizeInMillis) {
+		super();
+		this.requestLimit = requestLimit;
+		this.windowSizeInMillis = windowSizeInMillis;
+		this.userRequests = new ConcurrentHashMap<>();
+	}
+	
+	@Override
+	public boolean allowRequest(String userId) {
+		return false;
+	}
+
+}

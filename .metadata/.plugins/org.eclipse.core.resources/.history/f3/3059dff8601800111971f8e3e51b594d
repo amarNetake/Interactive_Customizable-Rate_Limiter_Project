@@ -1,0 +1,5 @@
+package com.amarnetake.RateLimiter.service.impl;
+
+public class FixedWindowRateLimiter {
+
+}

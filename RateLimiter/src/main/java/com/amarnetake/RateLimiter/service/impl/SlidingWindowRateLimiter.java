@@ -1,0 +1,51 @@
+package com.amarnetake.RateLimiter.service.impl;
+
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.amarnetake.RateLimiter.service.RateLimiterStrategy;
+
+//Worst case cleanup: O(n)
+//Average: near O(1)
+//Space: O(requests in window)
+
+public class SlidingWindowRateLimiter implements RateLimiterStrategy {
+
+    private final int limit;
+    private final long windowSizeInMillis;
+
+    private final ConcurrentHashMap<String, Queue<Long>> userRequests;
+
+    public SlidingWindowRateLimiter(int limit, long windowSizeInMillis) {
+        this.limit = limit;
+        this.windowSizeInMillis = windowSizeInMillis;
+        this.userRequests = new ConcurrentHashMap<>();
+    }
+
+    @Override
+    public boolean allowRequest(String userId) {
+
+        long currentTime = System.currentTimeMillis();
+
+        userRequests.putIfAbsent(userId, new LinkedList<>());
+
+        Queue<Long> timestamps = userRequests.get(userId);
+
+        synchronized (timestamps) {
+
+            // Remove expired timestamps
+            while (!timestamps.isEmpty() &&
+                    currentTime - timestamps.peek() >= windowSizeInMillis) {
+                timestamps.poll();
+            }
+
+            if (timestamps.size() < limit) {
+                timestamps.add(currentTime);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+}

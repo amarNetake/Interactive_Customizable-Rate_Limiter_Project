@@ -1,0 +1,43 @@
+package com.amarnetake.RateLimiter.service.impl;
+
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.amarnetake.RateLimiter.model.AlgorithmType;
+import com.amarnetake.RateLimiter.service.RateLimiterFactory;
+import com.amarnetake.RateLimiter.service.RateLimiterService;
+import com.amarnetake.RateLimiter.service.RateLimiterStrategy;
+
+public class RateLimiterServiceImpl implements RateLimiterService {
+
+    private final ConcurrentHashMap<String, RateLimiterStrategy> userLimiters;
+
+    public RateLimiterServiceImpl() {
+        this.userLimiters = new ConcurrentHashMap<>();
+    }
+
+    @Override
+    public void createRateLimit(String userId,
+                                AlgorithmType type,
+                                int limit,
+                                long windowSizeInMillis) {
+
+        RateLimiterStrategy strategy =
+                RateLimiterFactory.createStrategy(type,
+                        limit,
+                        windowSizeInMillis);
+
+        userLimiters.put(userId, strategy);
+    }
+
+    @Override
+    public boolean checkAccess(String userId) {
+
+        RateLimiterStrategy strategy = userLimiters.get(userId);
+
+        if (strategy == null) {
+            throw new RuntimeException("No rate limit configured for user");
+        }
+
+        return strategy.allowRequest(userId);
+    }
+}
